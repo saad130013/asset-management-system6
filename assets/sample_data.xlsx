@@ -1,0 +1,142 @@
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+import os
+
+def create_light_sample_data():
+    """إنشاء بيانات نموذجية مخففة للأصول"""
+    
+    # بيانات مخففة - 20 سجل فقط
+    data = {
+        'Entity': ['الهيئة'] * 20,
+        'Entity Code': ['0047'] * 20,
+        'Level 1 FA Module Code': ['13', '13', '13', '13', '13', '13', '13', '13', '15', '15', '15', '15', '08', '08', '13', '13', '13', '15', '15', '08'],
+        'Level 1 FA Module - English Description': [
+            'Information Technology Assets', 'Information Technology Assets', 'Information Technology Assets', 
+            'Information Technology Assets', 'Information Technology Assets', 'Information Technology Assets',
+            'Information Technology Assets', 'Information Technology Assets', 'Office Furniture', 'Office Furniture',
+            'Office Furniture', 'Office Furniture', 'Vehicles and Transportation', 'Vehicles and Transportation',
+            'Information Technology Assets', 'Information Technology Assets', 'Information Technology Assets',
+            'Office Furniture', 'Office Furniture', 'Vehicles and Transportation'
+        ],
+        'Level 2 FA Module Code': ['02', '02', '02', '02', '02', '02', '02', '02', '01', '01', '01', '01', '01', '01', '02', '02', '02', '01', '01', '01'],
+        'Level 2 FA Module - English Description': [
+            'Office IT and Communication Equipment', 'Office IT and Communication Equipment', 
+            'Office IT and Communication Equipment', 'Office IT and Communication Equipment',
+            'Office IT and Communication Equipment', 'Office IT and Communication Equipment',
+            'Office IT and Communication Equipment', 'Office IT and Communication Equipment',
+            'Desks and Chairs', 'Desks and Chairs', 'Desks and Chairs', 'Desks and Chairs',
+            'Cars and Vehicles', 'Cars and Vehicles', 'Office IT and Communication Equipment',
+            'Office IT and Communication Equipment', 'Office IT and Communication Equipment',
+            'Desks and Chairs', 'Desks and Chairs', 'Cars and Vehicles'
+        ],
+        'Level 3 FA Module Code': ['03', '03', '04', '04', '05', '05', '03', '04', '01', '01', '02', '02', '01', '01', '03', '04', '05', '01', '02', '01'],
+        'Level 3 FA Module - English Description': [
+            'Display Screens & Monitors', 'Display Screens & Monitors', 'Laptops & Computers', 
+            'Laptops & Computers', 'Personal Communication Devices', 'Personal Communication Devices',
+            'Display Screens & Monitors', 'Laptops & Computers', 'Office Chairs', 'Office Chairs',
+            'Office Desks', 'Office Desks', 'Sedan Cars', 'Sedan Cars', 'Display Screens & Monitors',
+            'Laptops & Computers', 'Personal Communication Devices', 'Office Chairs', 'Office Desks',
+            'Sedan Cars'
+        ],
+        'Asset Description For Maintenance Purpose': [
+            'شاشة حاسب الي HP E273', 'شاشة حاسب الي DELL U2419', 'جهاز حاسب محمول HP EliteBook',
+            'جهاز حاسب محمول DELL Latitude', 'هاتف CISCO CP-8845', 'هاتف IP Phone',
+            'شاشة حاسب الي Samsung S24', 'جهاز حاسب مكتبي', 'كرسي مكتب مريح', 'كرسي مدير',
+            'مكتب موظف', 'مكتب مدير', 'تويوتا كامري 2022', 'هيونداي النترا 2023',
+            'شاشة حاسب الي LG Ultra', 'جهاز حاسب محمول Lenovo', 'هاتف Yealink',
+            'كرسي زائر', 'مكتب اجتماعات', 'تويوتا لاندكروزر'
+        ],
+        'Manufacturer': ['HP', 'DELL', 'HP', 'DELL', 'CISCO', 'Yealink', 'Samsung', 'HP', 'IKEA', 'IKEA', 
+                        'IKEA', 'IKEA', 'Toyota', 'Hyundai', 'LG', 'Lenovo', 'Yealink', 'IKEA', 'IKEA', 'Toyota'],
+        'Date Placed in Service': [
+            '2022-01-15', '2022-03-20', '2022-02-10', '2022-05-15', '2022-04-01',
+            '2022-06-20', '2022-07-10', '2022-08-05', '2021-11-10', '2021-12-15',
+            '2021-11-20', '2021-12-20', '2022-06-01', '2023-01-10', '2022-09-15',
+            '2022-10-20', '2022-11-05', '2022-01-10', '2022-02-15', '2023-02-01'
+        ],
+        'Cost': [1500, 1800, 3000, 3500, 800, 700, 1600, 2500, 600, 1200, 800, 1500, 90000, 75000, 1700, 3200, 750, 500, 1200, 120000],
+        'Depreciation amount': [500, 600, 1000, 1167, 267, 233, 533, 833, 120, 240, 160, 300, 18000, 15000, 567, 1067, 250, 100, 240, 24000],
+        'Net Book Value': [1000, 1200, 2000, 2333, 533, 467, 1067, 1667, 480, 960, 640, 1200, 72000, 60000, 1133, 2133, 500, 400, 960, 96000],
+        'Useful Life': [3, 3, 3, 3, 3, 3, 3, 3, 5, 5, 5, 5, 5, 5, 3, 3, 3, 5, 5, 5],
+        'Country': ['المملكة العربية السعودية'] * 20,
+        'Region': ['الرياض', 'الرياض', 'مكة المكرمة', 'مكة المكرمة', 'الشرقية', 'الشرقية', 
+                  'الرياض', 'الرياض', 'مكة المكرمة', 'مكة المكرمة', 'الشرقية', 'الشرقية',
+                  'الرياض', 'الرياض', 'مكة المكرمة', 'مكة المكرمة', 'الشرقية', 'الرياض', 'الرياض', 'مكة المكرمة'],
+        'City': ['الرياض', 'الرياض', 'جدة', 'جدة', 'الدمام', 'الخبر', 'الرياض', 'الرياض', 
+                'مكة', 'مكة', 'الظهران', 'الدمام', 'الرياض', 'الرياض', 'جدة', 'جدة', 'الخبر', 'الرياض', 'الرياض', 'جدة'],
+        'Custodian': [
+            'إدارة تقنية المعلومات', 'إدارة تقنية المعلومات', 'إدارة الموارد البشرية', 'إدارة الشؤون المالية',
+            'إدارة المشاريع', 'إدارة الخدمات', 'الإدارة التنفيذية', 'إدارة تقنية المعلومات',
+            'إدارة الموارد البشرية', 'الإدارة التنفيذية', 'إدارة الشؤون المالية', 'إدارة المشاريع',
+            'إدارة الخدمات', 'الإدارة التنفيذية', 'إدارة تقنية المعلومات', 'إدارة الموارد البشرية',
+            'إدارة الشؤون المالية', 'إدارة المشاريع', 'إدارة الخدمات', 'الإدارة التنفيذية'
+        ]
+    }
+    
+    # إضافة أعمدة إضافية بقيم افتراضية
+    additional_columns = {
+        'accounting group Code': ['01'] * 20,
+        'accounting group Arabic Description': ['الالات والمعدات والعقارات'] * 20,
+        'accounting group English Description': ['PPE'] * 20,
+        'Asset Code For Accounting Purpose': [f"1302030{i}" for i in range(1, 21)],
+        'Asset Functional Code': ['Not Available'] * 20,
+        'GL account': ['Not Available'] * 20,
+        'Cost Center': ['Not Available'] * 20,
+        'Asset Owner': ['الهيئة'] * 20,
+        'Consolidated Code': ['Not Available'] * 20,
+        'Unique Asset Number in MoF system': ['Not Available'] * 20,
+        'Linked/Associated Asset': ['Not Available'] * 20,
+        'Unique Asset Number in the entity': [f"ASSET{i:04d}" for i in range(1, 21)],
+        'Asset Description': data['Asset Description For Maintenance Purpose'],
+        'Tag number': [f"24{i:05d}" for i in range(10001, 10021)],
+        'Base Unit of Measure': ['العدد'] * 20,
+        'Quantity': [1] * 20,
+        'Accumulated Depreciation': [data['Cost'][i] - data['Net Book Value'][i] for i in range(20)],
+        'Residual Value': [0] * 20,
+        'Remaining useful life': [data['Useful Life'][i] - 1 for i in range(20)],
+        'Geographical Coordinates': ['Not Available'] * 20,
+        'National Address ID': ['Not Available'] * 20,
+        'Building Number': ['B001', 'B001', 'B002', 'B002', 'B003', 'B003', 'B001', 'B001', 'B002', 'B002', 
+                           'B003', 'B003', 'B004', 'B004', 'B001', 'B002', 'B003', 'B001', 'B002', 'B004'],
+        'Floors Number': ['F01', 'F01', 'G00', 'G00', 'F02', 'F02', 'F01', 'F01', 'G00', 'G00', 
+                         'F02', 'F02', 'G00', 'G00', 'F01', 'G00', 'F02', 'F01', 'G00', 'G00'],
+        'Room/office Number': [f"{i:03d}" for i in range(101, 121)]
+    }
+    
+    # دمج البيانات
+    data.update(additional_columns)
+    
+    # إنشاء DataFrame
+    df = pd.DataFrame(data)
+    
+    # حفظ في ملف Excel
+    output_path = 'assets/sample_data.xlsx'
+    os.makedirs('assets', exist_ok=True)
+    
+    with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='FAR as of 30 Dec 23', index=False)
+        
+        # إضافة sheet للإحصائيات البسيطة
+        stats_data = {
+            'الإحصائية': ['إجمالي الأصول', 'إجمالي التكلفة', 'متوسط التكلفة', 'إجمالي الإهلاك', 'إجمالي القيمة الدفترية'],
+            'القيمة': [
+                len(df),
+                df['Cost'].sum(),
+                df['Cost'].mean(),
+                df['Accumulated Depreciation'].sum(),
+                df['Net Book Value'].sum()
+            ],
+            'الوحدة': ['أصل', 'ريال', 'ريال', 'ريال', 'ريال']
+        }
+        stats_df = pd.DataFrame(stats_data)
+        stats_df.to_excel(writer, sheet_name='الإحصائيات', index=False)
+    
+    print(f"✅ تم إنشاء ملف العينة المخفف: {output_path}")
+    print(f"📊 يحتوي على {len(df)} سجل لأصول متنوعة")
+    print(f"💾 حجم الملف: {os.path.getsize(output_path) / 1024:.1f} كيلوبايت")
+    
+    return df
+
+if __name__ == "__main__":
+    create_light_sample_data()
